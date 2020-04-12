@@ -1,11 +1,6 @@
 use crossbeam::channel::{bounded, unbounded, Receiver};
-use owning_ref::{OwningHandle, OwningRef};
 use primal::{estimate_prime_pi, Primes, Sieve};
-use std::ops::{Deref, DerefMut};
 use std::thread;
-use std::cell::{Cell, RefCell};
-use std::sync::RwLock;
-use std::rc::Rc;
 
 pub fn thread_spawn<'a, T>(
     result: (impl FnOnce() + Send + 'static, T),
@@ -60,41 +55,6 @@ fn from_iterator_bounded<'a, T: Send + 'a>(
 /// thread.join();
 pub fn primes_unbounded() -> (impl FnOnce() + Send, Receiver<usize>) {
     from_iterator_unbounded(Primes::all())
-}
-
-pub struct PrimesBounded {
-    pub recv: Receiver<usize>,
-    sieve: Sieve,
-}
-
-pub struct IteratorWithPrivateData<T, I: Iterator<Item = T>, Priv> {
-    pub it: I,
-    private: Box<Priv>,
-}
-
-impl<T, I: Iterator<Item = T>, Priv> Iterator for IteratorWithPrivateData<T, I, Priv> {
-    type Item = T;
-
-    fn next(&mut self) -> Option<T> {
-        self.it.next()
-    }
-}
-
-pub struct PrimesBoundedIterator<I: Iterator<Item = usize>> {
-    it: I,
-    sieve: Sieve,
-}
-
-struct DerefImpl<T> {
-    value: T,
-}
-
-impl<T: DerefMut<Target = U>, U: Iterator<Item = V>, V> Iterator for DerefImpl<T> {
-    type Item = V;
-
-    fn next(&mut self) -> Option<V> {
-        self.value.next()
-    }
 }
 
 struct WithObj<T, U> {

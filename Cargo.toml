@@ -9,4 +9,3 @@ edition = "2018"
 [dependencies]
 crossbeam = "0.7"
 primal = "0.2"
-owning_ref = "0.4"
