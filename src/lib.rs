@@ -88,6 +88,14 @@ where
     }
 }
 
+/// ```
+/// # use primal_crossbeam::*;
+/// # use std::thread;
+/// let (thread, r) = thread_spawn(primes_bounded(5));
+/// assert_eq!(r.recv(), Ok(2));
+/// assert_eq!(r.recv(), Ok(3));
+/// thread.join();
+/// assert_eq!(r.recv(), Ok(5));
 pub fn primes_bounded(limit: usize) -> (impl FnOnce() + Send, Receiver<usize>) {
     let (_, high) = estimate_prime_pi(limit as u64);
     let sieve = Sieve::new(limit);
