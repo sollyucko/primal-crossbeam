@@ -2,9 +2,7 @@ use crossbeam_channel::{bounded, unbounded, Receiver, Sender};
 use primal::{estimate_prime_pi, Primes, Sieve};
 use std::thread;
 
-pub fn thread_spawn<T>(
-    result: (impl FnOnce() + Send + 'static, T),
-) -> (thread::JoinHandle<()>, T) {
+pub fn thread_spawn<T>(result: (impl FnOnce() + Send + 'static, T)) -> (thread::JoinHandle<()>, T) {
     let (f, x) = result;
     (thread::spawn(f), x)
 }
