@@ -3,9 +3,13 @@ name = "primal-crossbeam"
 version = "0.1.0"
 authors = ["Solomon Ucko <solly.ucko@gmail.com>"]
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+keywords = ["primal", "prime", "crossbeam", "channel", "thread"]
+categories = ["concurrency", "mathematics"]
+description = "An interface to primal using crossbeam's channels. This allows the worker thread to stop once the receiver is dropped, for example."
+license = "CC0-1.0"
+repository = "https://github.com/sollyucko/primal-crossbeam"
+readme = "README.md"
 
 [dependencies]
-crossbeam = "0.7"
+crossbeam-channel = "0.4"
 primal = "0.2"

@@ -1,8 +1,8 @@
-use crossbeam::channel::{bounded, unbounded, Receiver, Sender};
+use crossbeam_channel::{bounded, unbounded, Receiver, Sender};
 use primal::{estimate_prime_pi, Primes, Sieve};
 use std::thread;
 
-pub fn thread_spawn<'a, T>(
+pub fn thread_spawn<T>(
     result: (impl FnOnce() + Send + 'static, T),
 ) -> (thread::JoinHandle<()>, T) {
     let (f, x) = result;
@@ -69,7 +69,7 @@ impl<T, U> WithObj<T, U> {
         F: FnOnce(&'a U) -> T + 'a,
     {
         let obj_box = Box::new(obj);
-        WithObj {
+        Self {
             value: make_value(unsafe { &*(&*obj_box as *const U) }),
             obj_box,
         }
@@ -97,11 +97,13 @@ where
 /// assert_eq!(r.recv(), Ok(5));
 pub fn primes_bounded(limit: usize) -> (impl FnOnce() + Send, Receiver<usize>) {
     let (_, high) = estimate_prime_pi(limit as u64);
+    #[allow(clippy::cast_possible_truncation)]
+    let len = high as usize;
     let sieve = Sieve::new(limit);
     from_iterator_bounded(
         WithObj::new(sieve, move |s| {
             Sieve::primes_from(s, 0).take_while(move |x| x <= &limit)
         }),
-        high as usize,
+        len,
     )
 }
