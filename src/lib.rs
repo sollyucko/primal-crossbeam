@@ -59,6 +59,7 @@ pub fn primes_unbounded() -> (impl FnOnce() + Send, Receiver<usize>) {
 
 struct WithObj<T, U> {
     pub value: T,
+    #[allow(dead_code)]
     obj_box: Box<U>,
 }
 
@@ -66,7 +67,7 @@ impl<T, U> WithObj<T, U> {
     fn new<'a, F>(obj: U, make_value: F) -> Self
     where
         U: 'a,
-        F: FnOnce(&'a U) -> T,
+        F: FnOnce(&'a U) -> T + 'a,
     {
         let obj_box = Box::new(obj);
         WithObj {
@@ -91,7 +92,7 @@ pub fn primes_bounded_approx(limit: usize) -> (impl FnOnce() /*+ Send*/, Receive
     let (_, high) = estimate_prime_pi(limit as u64);
     let sieve = Sieve::new(limit);
     from_iterator_bounded(
-        WithObj::new(sieve, |s| Sieve::primes_from(s, 0).take(high as usize)),
+        WithObj::new(sieve, move |s| Sieve::primes_from(s, 0).take(high as usize)),
         high as usize,
     )
 }
