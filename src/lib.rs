@@ -94,7 +94,7 @@ where
 /// let (thread, r) = thread_spawn(primes_bounded(5));
 /// assert_eq!(r.recv(), Ok(2));
 /// assert_eq!(r.recv(), Ok(3));
-/// thread.join();
+/// thread.join(); // Since the number of primes is bounded, this will eventually terminate.
 /// assert_eq!(r.recv(), Ok(5));
 pub fn primes_bounded(limit: usize) -> (impl FnOnce() + Send, Receiver<usize>) {
     let (_, high) = estimate_prime_pi(limit as u64);
