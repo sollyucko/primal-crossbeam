@@ -27,9 +27,9 @@ fn from_iterator_unbounded<'a, T: Send + 'a>(
 
 /// Assumes that `it` has at most `bound` values.
 fn from_iterator_bounded<'a, T: Send + 'a>(
-    it: impl Iterator<Item = T> /*+ Send*/ + 'a,
+    it: impl Iterator<Item = T> + 'a,
     bound: usize,
-) -> (impl FnOnce() /*+ Send*/ + 'a, Receiver<T>) {
+) -> (impl FnOnce() + 'a, Receiver<T>) {
     let (s, r) = bounded::<T>(bound);
     (
         move || {
@@ -63,13 +63,23 @@ struct WithObj<T, U> {
 }
 
 impl<T, U> WithObj<T, U> {
-    fn new<'a, F>(obj: U, make_value: F) -> Self where U : 'a, F : FnOnce(&'a U) -> T {
+    fn new<'a, F>(obj: U, make_value: F) -> Self
+    where
+        U: 'a,
+        F: FnOnce(&'a U) -> T,
+    {
         let obj_box = Box::new(obj);
-        WithObj { value: make_value(unsafe { &*(&*obj_box as *const U) }), obj_box }
+        WithObj {
+            value: make_value(unsafe { &*(&*obj_box as *const U) }),
+            obj_box,
+        }
     }
 }
 
-impl<T, U, V> Iterator for WithObj<T, U> where T : Iterator<Item = V> {
+impl<T, U, V> Iterator for WithObj<T, U>
+where
+    T: Iterator<Item = V>,
+{
     type Item = V;
 
     fn next(&mut self) -> Option<V> {
