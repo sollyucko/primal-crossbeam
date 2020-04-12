@@ -1,4 +1,4 @@
-use crossbeam::channel::{bounded, unbounded, Receiver};
+use crossbeam::channel::{bounded, unbounded, Receiver, Sender};
 use primal::{estimate_prime_pi, Primes, Sieve};
 use std::thread;
 
@@ -9,10 +9,11 @@ pub fn thread_spawn<'a, T>(
     (thread::spawn(f), x)
 }
 
-fn from_iterator_unbounded<'a, T: Send + 'a>(
+fn from_iterator<'a, T: Send + 'a>(
     it: impl Iterator<Item = T> + Send + 'a,
+    s: Sender<T>,
+    r: Receiver<T>,
 ) -> (impl FnOnce() + Send + 'a, Receiver<T>) {
-    let (s, r) = unbounded::<T>();
     (
         move || {
             for x in it {
@@ -25,22 +26,20 @@ fn from_iterator_unbounded<'a, T: Send + 'a>(
     )
 }
 
+fn from_iterator_unbounded<'a, T: Send + 'a>(
+    it: impl Iterator<Item = T> + Send + 'a,
+) -> (impl FnOnce() + Send + 'a, Receiver<T>) {
+    let (s, r) = unbounded::<T>();
+    from_iterator(it, s, r)
+}
+
 /// Assumes that `it` has at most `bound` values.
 fn from_iterator_bounded<'a, T: Send + 'a>(
-    it: impl Iterator<Item = T> + 'a,
+    it: impl Iterator<Item = T> + Send + 'a,
     bound: usize,
 ) -> (impl FnOnce() + 'a, Receiver<T>) {
     let (s, r) = bounded::<T>(bound);
-    (
-        move || {
-            for x in it {
-                if s.send(x).is_err() {
-                    return;
-                }
-            }
-        },
-        r,
-    )
+    from_iterator(it, s, r)
 }
 
 /// ```
@@ -100,7 +99,9 @@ pub fn primes_bounded(limit: usize) -> (impl FnOnce() + Send, Receiver<usize>) {
     let (_, high) = estimate_prime_pi(limit as u64);
     let sieve = Sieve::new(limit);
     from_iterator_bounded(
-        WithObj::new(sieve, move |s| Sieve::primes_from(s, 0).take_while(move |x| x <= &limit)),
+        WithObj::new(sieve, move |s| {
+            Sieve::primes_from(s, 0).take_while(move |x| x <= &limit)
+        }),
         high as usize,
     )
 }
