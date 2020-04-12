@@ -88,11 +88,11 @@ where
     }
 }
 
-pub fn primes_bounded_approx(limit: usize) -> (impl FnOnce() + Send, Receiver<usize>) {
+pub fn primes_bounded(limit: usize) -> (impl FnOnce() + Send, Receiver<usize>) {
     let (_, high) = estimate_prime_pi(limit as u64);
     let sieve = Sieve::new(limit);
     from_iterator_bounded(
-        WithObj::new(sieve, move |s| Sieve::primes_from(s, 0).take(high as usize)),
+        WithObj::new(sieve, move |s| Sieve::primes_from(s, 0).take_while(move |x| x <= &limit)),
         high as usize,
     )
 }
